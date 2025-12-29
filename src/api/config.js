@@ -4,7 +4,19 @@ export const API_BASE_URL =
   'https://musicstreamingapp-backend.onrender.com';
 
 export const API_ENDPOINTS = {
+  // Auth endpoints
+  AUTH: `${API_BASE_URL}/api/user`,
+
   // Music endpoints
+  MUSIC: `${API_BASE_URL}/api/music`,
+
+  // Podcast endpoints
+  PODCAST: `${API_BASE_URL}/api/podcast`,
+
+  // Recently played endpoints
+  RECENTLY_PLAYED: `${API_BASE_URL}/api/recently-played`,
+
+  // Legacy detailed endpoints
   music: {
     getAll: () => `${API_BASE_URL}/api/music`,
     getById: (id) => `${API_BASE_URL}/api/music/${id}`,

@@ -5,13 +5,15 @@ import {
   QueueListIcon,
   HeartIcon,
   ClockIcon,
-  SparklesIcon
+  SparklesIcon,
+  MicrophoneIcon
 } from '@heroicons/react/24/outline';
 
 const Sidebar = ({ selectedCategory, setSelectedCategory }) => {
   const categories = [
     { name: 'All', icon: HomeIcon },
-    { name: 'Recommended', icon: SparklesIcon }
+    { name: 'Recommended', icon: SparklesIcon },
+    { name: 'Podcasts', icon: MicrophoneIcon }
   ];
 
   return (
