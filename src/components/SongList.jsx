@@ -1,109 +1,196 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { PlayIcon, PauseIcon } from '@heroicons/react/24/solid';
-import { ClockIcon } from '@heroicons/react/24/outline';
+import { recentlyPlayedService } from '../api/musicService';
 
-const SongList = ({ songs, currentSong, playSong, isPlaying }) => {
+const SongList = ({
+  songs,
+  currentSong,
+  playSong,
+  isPlaying,
+  refreshTrigger,
+  isAuthenticated
+}) => {
   const formatDuration = (seconds) => {
+    if (!seconds && seconds !== 0) return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const [recentlyPlayed, setRecentlyPlayed] = useState(null);
+
+  useEffect(() => {
+    // Only fetch if user is authenticated
+    if (!isAuthenticated) {
+      setRecentlyPlayed([]);
+      return;
+    }
+
+    let mounted = true;
+    const loadRecent = async () => {
+      try {
+        const data = await recentlyPlayedService.getPlayedMusic();
+        if (mounted) setRecentlyPlayed(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (mounted) setRecentlyPlayed([]);
+      }
+    };
+
+    loadRecent();
+    return () => {
+      mounted = false;
+    };
+  }, [refreshTrigger, isAuthenticated]);
+
   return (
     <div className="py-6">
-      <div className="mb-8">
-        <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent">
+      {/* Recently Played Section (only shown when authenticated and has data) */}
+      {isAuthenticated && recentlyPlayed && recentlyPlayed.length > 0 && (
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">Recently Played</h3>
+            <p className="text-xs text-gray-400">
+              Your recent listening history
+            </p>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {recentlyPlayed.map((s, i) => {
+              // backend returns rows where `song_id` may be populated with the song object
+              const songObj = s && s.song_id ? s.song_id : s;
+              return (
+                <div
+                  key={(songObj && songObj.id) || i}
+                  className="min-w-[200px] w-[200px] flex-shrink-0 group bg-gradient-to-b from-gray-800/30 to-gray-900/30 rounded-lg overflow-hidden border border-gray-700/20 cursor-pointer hover:border-cyan-500/30 transition-all"
+                  onClick={() => playSong(songObj)}
+                >
+                  <div className="relative w-full aspect-square bg-gray-900/10 flex items-center justify-center overflow-hidden">
+                    <img
+                      src={
+                        (songObj && (songObj.image || songObj.album_art)) ||
+                        'https://via.placeholder.com/400x400?text=Song'
+                      }
+                      alt={
+                        (songObj && (songObj.title || songObj.song)) || 'Song'
+                      }
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) =>
+                        (e.target.src =
+                          'https://via.placeholder.com/400x400?text=Song')
+                      }
+                    />
+                  </div>
+                  <div className="p-3">
+                    <div
+                      className="font-medium text-sm text-white mb-1 overflow-hidden text-ellipsis whitespace-nowrap"
+                      title={
+                        (songObj && (songObj.title || songObj.song)) ||
+                        'Unknown'
+                      }
+                    >
+                      {(songObj && (songObj.title || songObj.song)) ||
+                        'Unknown'}
+                    </div>
+                    <div
+                      className="text-xs text-gray-400 mb-1 overflow-hidden text-ellipsis whitespace-nowrap"
+                      title={
+                        (songObj && (songObj.artist || songObj.music)) || ''
+                      }
+                    >
+                      {(songObj && (songObj.artist || songObj.music)) || ''}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      {songObj && songObj.year && <span>{songObj.year}</span>}
+                      {songObj && songObj.duration && (
+                        <>
+                          {songObj.year && <span>•</span>}
+                          <span>{formatDuration(songObj.duration)}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold mb-1 bg-gradient-to-r from-cyan-400 via-blue-400 bg-clip-text text-transparent">
           Discover Music
         </h2>
         <p className="text-gray-500 text-sm">Explore your favorite tracks</p>
       </div>
 
-      {songs.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <div className="mb-4">
-            <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center border border-gray-700/50">
-              <MusicalNoteIcon className="w-10 h-10 text-gray-600" />
-            </div>
-          </div>
-          <p className="text-xl font-medium">No songs found</p>
-          <p className="text-sm text-gray-600 mt-2">
-            Try adjusting your search or filters
-          </p>
-        </div>
+      {!songs || songs.length === 0 ? (
+        <div className="text-center py-16 text-gray-400">No songs found</div>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {songs.map((song, index) => {
-            const isCurrentSong = currentSong?.media_url === song.media_url;
-
+            const isCurrentSong =
+              currentSong && currentSong.media_url === song.media_url;
             return (
               <div
                 key={index}
-                className={`group flex items-center gap-4 p-4 rounded-xl transition-all duration-300 cursor-pointer relative overflow-hidden ${
-                  isCurrentSong
-                    ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 shadow-lg shadow-cyan-500/20 border border-cyan-500/30'
-                    : 'bg-gradient-to-r from-gray-900/30 to-gray-800/30 hover:from-gray-800/50 hover:to-gray-700/50 border border-gray-800/50 hover:border-gray-700/50 hover:shadow-lg'
+                className={`w-[200px] group relative bg-gradient-to-b from-gray-800/30 to-gray-900/30 rounded-lg overflow-hidden border border-gray-700/20 cursor-pointer hover:border-cyan-500/30 transition-all ${
+                  isCurrentSong ? 'ring-2 ring-cyan-500/50' : ''
                 }`}
                 onClick={() => playSong(song)}
               >
-                {/* Animated background for current song */}
                 {isCurrentSong && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 animate-shimmer"></div>
+                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-cyan-500/10 to-blue-500/10 animate-shimmer"></div>
                 )}
 
-                {/* Album Art */}
-                <div className="relative flex-shrink-0 z-10">
-                  <div
-                    className={`absolute -inset-1 rounded-xl blur-md transition-opacity duration-300 ${
-                      isCurrentSong
-                        ? 'bg-gradient-to-r from-cyan-500 to-blue-500 opacity-50'
-                        : 'bg-gradient-to-r from-gray-600 to-gray-700 opacity-0 group-hover:opacity-30'
-                    }`}
-                  ></div>
+                <div className="relative w-full aspect-square bg-gray-900/10 flex items-center justify-center overflow-hidden">
                   <img
                     src={song.image}
                     alt={song.song}
-                    className="relative w-16 h-16 rounded-lg object-cover shadow-xl"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.src =
+                        'https://via.placeholder.com/400x400?text=Song';
+                    }}
                   />
-                  <div
-                    className={`absolute inset-0 flex items-center justify-center bg-black/70 rounded-lg transition-all duration-300 ${
-                      isCurrentSong
-                        ? 'opacity-100'
-                        : 'opacity-0 group-hover:opacity-100'
-                    }`}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      playSong(song);
+                    }}
+                    className="absolute top-3 right-3 p-2 bg-black/60 hover:bg-black/80 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
                   >
                     {isCurrentSong && isPlaying ? (
-                      <PauseIcon className="w-7 h-7 text-cyan-400 drop-shadow-[0_0_10px_rgba(0,217,255,0.8)]" />
+                      <PauseIcon className="w-5 h-5 text-cyan-400" />
                     ) : (
-                      <PlayIcon className="w-7 h-7 text-white drop-shadow-lg" />
+                      <PlayIcon className="w-5 h-5 text-white" />
                     )}
-                  </div>
+                  </button>
                 </div>
 
-                {/* Song Info */}
-                <div className="flex-1 min-w-0 z-10">
-                  <h3
-                    className={`font-semibold truncate transition-colors ${
-                      isCurrentSong
-                        ? 'text-cyan-400 drop-shadow-[0_0_5px_rgba(0,217,255,0.5)]'
-                        : 'text-white group-hover:text-cyan-300'
+                <div className="p-3">
+                  <div
+                    className={`font-medium text-sm text-white mb-1 overflow-hidden text-ellipsis whitespace-nowrap ${
+                      isCurrentSong ? 'text-cyan-400' : ''
                     }`}
+                    title={song.song}
                   >
                     {song.song}
-                  </h3>
-                  <p className="text-sm text-gray-400 truncate group-hover:text-gray-300 transition-colors">
+                  </div>
+                  <div
+                    className="text-xs text-gray-400 mb-1 overflow-hidden text-ellipsis whitespace-nowrap"
+                    title={song.music || 'Unknown Artist'}
+                  >
                     {song.music || 'Unknown Artist'}
-                  </p>
-                </div>
-
-                {/* Duration & Year */}
-                <div className="flex items-center gap-6 text-sm text-gray-500 z-10">
-                  <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 bg-gray-800/50 rounded-lg border border-gray-700/50">
-                    <ClockIcon className="w-4 h-4" />
-                    {song.year}
-                  </span>
-                  <span className="font-medium text-gray-400 tabular-nums">
-                    {formatDuration(parseInt(song.duration))}
-                  </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    {song.year && <span>{song.year}</span>}
+                    {song.duration && (
+                      <>
+                        {song.year && <span>•</span>}
+                        <span>{formatDuration(parseInt(song.duration))}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             );

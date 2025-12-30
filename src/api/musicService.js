@@ -130,6 +130,81 @@ export const musicService = {
       console.error('Error uploading song:', error);
       throw error;
     }
+  },
+
+  /**
+   * Save recommended songs to songs table
+   */
+  saveRecommendedToSongs: async (songs) => {
+    try {
+      const items = Array.isArray(songs) ? songs : [songs];
+      const data = await fetchWithAuth(API_ENDPOINTS.music.saveToSongs(), {
+        method: 'POST',
+        body: JSON.stringify({ items })
+      });
+      return data;
+    } catch (error) {
+      console.error('Error saving recommended songs:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Like a song
+   */
+  likeSong: async (songId) => {
+    try {
+      const data = await fetchWithAuth(API_ENDPOINTS.music.likeSong(), {
+        method: 'POST',
+        body: JSON.stringify({ song_id: songId })
+      });
+      return data;
+    } catch (error) {
+      console.error('Error liking song:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get liked songs
+   */
+  getLikedSongs: async () => {
+    try {
+      const data = await fetchWithAuth(API_ENDPOINTS.music.getLikedSongs());
+      return data.songs || [];
+    } catch (error) {
+      console.error('Error fetching liked songs:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Unlike a song
+   */
+  unlikeSong: async (songId) => {
+    try {
+      const data = await fetchWithAuth(API_ENDPOINTS.music.unlikeSong(), {
+        method: 'DELETE',
+        body: JSON.stringify({ song_id: songId })
+      });
+      return data;
+    } catch (error) {
+      console.error('Error unliking song:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Check if a song is liked
+   */
+  checkIfLiked: async (songId) => {
+    try {
+      const songs = await musicService.getLikedSongs();
+      return songs.some((song) => song.id === songId);
+    } catch (error) {
+      console.error('Error checking if song is liked:', error);
+      return false;
+    }
   }
 };
 

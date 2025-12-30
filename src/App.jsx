@@ -5,6 +5,7 @@ import SongList from './components/SongList';
 import Player from './components/Player';
 import NowPlaying from './components/NowPlaying';
 import Podcasts from './components/Podcasts';
+import LikedSongs from './components/LikedSongs';
 import { musicService, recentlyPlayedService } from './api/musicService';
 import { useAuth } from './context/AuthContext';
 
@@ -18,14 +19,39 @@ function App() {
   const [showPlayer, setShowPlayer] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [recentlyPlayedRefresh, setRecentlyPlayedRefresh] = useState(0);
   const audioRef = useRef(null);
   const { isAuthenticated } = useAuth();
+  const trackingTimerRef = useRef(null);
 
   // Close player (hide it without stopping playback)
   const closePlayer = () => {
+    // Clear tracking timer if song is closed before 2 seconds
+    if (trackingTimerRef.current) {
+      clearTimeout(trackingTimerRef.current);
+      trackingTimerRef.current = null;
+    }
+
     setShowPlayer(false);
-    // Don't pause the audio - let it continue playing
+    // Pause the audio when player is closed so playback stops
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+      } catch (e) {
+        console.warn('Failed to pause audio on close:', e);
+      }
+    }
+    setIsPlaying(false);
   };
+
+  // Cleanup tracking timer on unmount
+  useEffect(() => {
+    return () => {
+      if (trackingTimerRef.current) {
+        clearTimeout(trackingTimerRef.current);
+      }
+    };
+  }, []);
 
   // Show player when song is played
   useEffect(() => {
@@ -91,8 +117,14 @@ function App() {
     }
   };
 
-  // Play specific song and track it
+  // Play specific song and track it after 2 seconds
   const playSong = async (song) => {
+    // Clear any existing tracking timer
+    if (trackingTimerRef.current) {
+      clearTimeout(trackingTimerRef.current);
+      trackingTimerRef.current = null;
+    }
+
     // Show player first
     setShowPlayer(true);
 
@@ -110,14 +142,38 @@ function App() {
       }
     }, 50);
 
-    // Track played song (don't block playback if tracking fails)
-    if (song.id) {
+    // Track played song after 2 seconds of playback
+    trackingTimerRef.current = setTimeout(async () => {
       try {
-        await recentlyPlayedService.setPlayedMusic(song.id);
+        // If on Recommended page and song doesn't have an id (external song),
+        // save it to songs table first
+        if (selectedCategory === 'Recommended' && !song.id) {
+          try {
+            const savedResponse = await musicService.saveRecommendedToSongs([
+              song
+            ]);
+            if (savedResponse.songs && savedResponse.songs.length > 0) {
+              const savedSong = savedResponse.songs[0];
+              // Update current song with the saved song's id
+              song.id = savedSong.id;
+              console.log('Song saved to songs table:', savedSong.id);
+            }
+          } catch (saveErr) {
+            console.warn('Failed to save song to songs table:', saveErr);
+          }
+        }
+
+        // Track in recently played if song has an id
+        if (song.id) {
+          await recentlyPlayedService.setPlayedMusic(song.id);
+          console.log('Song tracked:', song.song || song.title);
+          // Trigger refresh of recently played section
+          setRecentlyPlayedRefresh((prev) => prev + 1);
+        }
       } catch (err) {
         console.warn('Failed to track played song:', err);
       }
-    }
+    }, 2000); // 2 seconds delay
   };
 
   // Next/Previous song
@@ -159,6 +215,12 @@ function App() {
           {/* Conditional Content: Podcasts or Song List */}
           {selectedCategory === 'Podcasts' ? (
             <Podcasts />
+          ) : selectedCategory === 'Liked Songs' ? (
+            <LikedSongs
+              currentSong={currentSong}
+              playSong={playSong}
+              isPlaying={isPlaying}
+            />
           ) : (
             <div className="flex-1 overflow-y-auto px-6 pb-32">
               {loading && (
@@ -218,6 +280,8 @@ function App() {
                   currentSong={currentSong}
                   playSong={playSong}
                   isPlaying={isPlaying}
+                  refreshTrigger={recentlyPlayedRefresh}
+                  isAuthenticated={isAuthenticated}
                 />
               )}
             </div>

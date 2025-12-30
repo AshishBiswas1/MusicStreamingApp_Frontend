@@ -10,7 +10,9 @@ import {
   ArrowsPointingOutIcon,
   MinusIcon
 } from '@heroicons/react/24/solid';
-import { ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, HeartIcon } from '@heroicons/react/24/outline';
+import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
+import { musicService } from '../api/musicService';
 
 const Player = ({
   currentSong,
@@ -30,6 +32,7 @@ const Player = ({
   const [isMinimized, setIsMinimized] = useState(false);
   const [repeatMode, setRepeatMode] = useState('none'); // 'none', 'single', 'all'
   const [isPiPSupported, setIsPiPSupported] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
   const [position, setPosition] = useState({
     x: typeof window !== 'undefined' ? window.innerWidth - 420 : 0,
     y: typeof window !== 'undefined' ? window.innerHeight - 520 : 0
@@ -232,6 +235,52 @@ const Player = ({
   const toggleMinimize = () => {
     setIsMinimized(!isMinimized);
   };
+
+  const handleLikeSong = async () => {
+    if (!currentSong || !currentSong.id) {
+      console.warn('Cannot like song without ID');
+      return;
+    }
+
+    try {
+      if (isLiked) {
+        // Unlike the song
+        await musicService.unlikeSong(currentSong.id);
+        setIsLiked(false);
+        console.log('Song unliked:', currentSong.song);
+      } else {
+        // Like the song
+        await musicService.likeSong(currentSong.id);
+        setIsLiked(true);
+        console.log('Song liked:', currentSong.song);
+      }
+    } catch (error) {
+      console.error('Failed to toggle like:', error);
+      // If already liked, just toggle the UI
+      if (error.message && error.message.includes('duplicate')) {
+        setIsLiked(true);
+      }
+    }
+  };
+
+  // Check if song is liked when song changes
+  useEffect(() => {
+    const checkLikedStatus = async () => {
+      if (currentSong && currentSong.id) {
+        try {
+          const liked = await musicService.checkIfLiked(currentSong.id);
+          setIsLiked(liked);
+        } catch (error) {
+          console.error('Failed to check liked status:', error);
+          setIsLiked(false);
+        }
+      } else {
+        setIsLiked(false);
+      }
+    };
+
+    checkLikedStatus();
+  }, [currentSong]);
 
   const openInNewWindow = () => {
     // Open player in a new popup window
@@ -768,19 +817,65 @@ const Player = ({
             <div className="flex gap-1.5">
               <button
                 onClick={onClose}
-                className="w-3 h-3 bg-red-500 hover:bg-red-600 rounded-full transition-all no-drag"
+                className="w-3 h-3 bg-red-500 hover:bg-red-600 rounded-full transition-all no-drag flex items-center justify-center"
                 title="Close"
-              ></button>
+              >
+                <svg
+                  width="8"
+                  height="8"
+                  viewBox="0 0 8 8"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M1 1L7 7M7 1L1 7"
+                    stroke="white"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
               <button
                 onClick={toggleMinimize}
-                className="w-3 h-3 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all no-drag"
+                className="w-3 h-3 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all no-drag flex items-center justify-center"
                 title="Minimize"
-              ></button>
+              >
+                <svg
+                  width="8"
+                  height="2"
+                  viewBox="0 0 8 2"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M0 1H8"
+                    stroke="white"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
               <button
                 onClick={openInNewWindow}
-                className="w-3 h-3 bg-green-500 hover:bg-green-600 rounded-full transition-all no-drag"
+                className="w-3 h-3 bg-green-500 hover:bg-green-600 rounded-full transition-all no-drag flex items-center justify-center"
                 title="Open in New Window"
-              ></button>
+              >
+                <svg
+                  width="8"
+                  height="8"
+                  viewBox="0 0 8 8"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M1 4L4 1M4 1L7 4M4 1V7"
+                    stroke="white"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
           <h3 className="text-white/90 text-sm font-semibold absolute left-1/2 transform -translate-x-1/2">
@@ -907,6 +1002,18 @@ const Player = ({
               className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/20 hover:border-white/40 hover:scale-110 backdrop-blur-sm group"
             >
               <ForwardIcon className="w-6 h-6 text-white/90 group-hover:text-white transition-all transform group-hover:translate-x-0.5" />
+            </button>
+
+            <button
+              onClick={handleLikeSong}
+              className="p-2.5 bg-white/10 hover:bg-white/20 rounded-lg transition-all border border-white/20 hover:border-white/40 hover:scale-110 backdrop-blur-sm group"
+              title={isLiked ? 'Liked' : 'Like this song'}
+            >
+              {isLiked ? (
+                <HeartIconSolid className="w-6 h-6 text-red-500" />
+              ) : (
+                <HeartIcon className="w-6 h-6 text-white/90 group-hover:text-red-400 transition-colors" />
+              )}
             </button>
 
             <button

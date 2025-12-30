@@ -21,7 +21,11 @@ export const API_ENDPOINTS = {
     getAll: () => `${API_BASE_URL}/api/music`,
     getById: (id) => `${API_BASE_URL}/api/music/${id}`,
     upload: () => `${API_BASE_URL}/api/music/upload`,
-    recommended: () => `${API_BASE_URL}/api/music/recommended`
+    recommended: () => `${API_BASE_URL}/api/music/recommended`,
+    saveToSongs: () => `${API_BASE_URL}/api/music/savetosongs`,
+    likeSong: () => `${API_BASE_URL}/api/music/like`,
+    unlikeSong: () => `${API_BASE_URL}/api/music/unlike`,
+    getLikedSongs: () => `${API_BASE_URL}/api/music/liked`
   },
 
   // Podcast endpoints
@@ -40,10 +44,11 @@ export const API_ENDPOINTS = {
 
   // Recently played endpoints
   recentlyPlayed: {
-    setMusic: () => `${API_BASE_URL}/api/recently-played/music`,
-    getMusic: () => `${API_BASE_URL}/api/recently-played/music`,
-    setPodcast: () => `${API_BASE_URL}/api/recently-played/podcast`,
-    getPodcast: () => `${API_BASE_URL}/api/recently-played/podcast`
+    // Backend mounts router at /api/recent, routes are /RecentMusic and /RecentPodcast
+    setMusic: () => `${API_BASE_URL}/api/recent/RecentMusic`,
+    getMusic: () => `${API_BASE_URL}/api/recent/RecentMusic`,
+    setPodcast: () => `${API_BASE_URL}/api/recent/RecentPodcast`,
+    getPodcast: () => `${API_BASE_URL}/api/recent/RecentPodcast`
   },
 
   // User endpoints

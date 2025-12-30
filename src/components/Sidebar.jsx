@@ -76,7 +76,10 @@ const Sidebar = ({ selectedCategory, setSelectedCategory }) => {
           </h2>
           <ul className="space-y-2">
             <li>
-              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-700/50 hover:text-white transition-all duration-300 group border border-transparent hover:border-gray-700/50">
+              <button
+                onClick={() => setSelectedCategory('Liked Songs')}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-700/50 hover:text-white transition-all duration-300 group border border-transparent hover:border-gray-700/50"
+              >
                 <HeartIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
                 <span className="font-medium">Liked Songs</span>
               </button>
