@@ -136,6 +136,39 @@ export const authService = {
   },
 
   /**
+   * Get last played song for current user
+   */
+  getLastPlayedSong: async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(API_ENDPOINTS.user.lastPlayedSong(), {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response
+          .json()
+          .catch(() => ({ message: 'Failed to fetch last played song' }));
+        throw new Error(
+          error.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('Error fetching last played song:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Logout user
    */
   logout: () => {

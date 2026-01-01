@@ -57,7 +57,8 @@ export const API_ENDPOINTS = {
     login: () => `${API_BASE_URL}/api/user/login`,
     getMe: () => `${API_BASE_URL}/api/user/me`,
     updateMe: () => `${API_BASE_URL}/api/user/updateMe`,
-    deleteMe: () => `${API_BASE_URL}/api/user/deleteMe`
+    deleteMe: () => `${API_BASE_URL}/api/user/deleteMe`,
+    lastPlayedSong: () => `${API_BASE_URL}/api/user/lastPlayedSong`
   },
 
   // Playlist endpoints
@@ -67,6 +68,7 @@ export const API_ENDPOINTS = {
     getById: (id) => `${API_BASE_URL}/api/playlist/${id}`,
     delete: (id) => `${API_BASE_URL}/api/playlist/${id}`,
     getSongs: (id) => `${API_BASE_URL}/api/playlist/${id}/songs`,
-    addSong: (id) => `${API_BASE_URL}/api/playlist/${id}/addSong`
+    addSong: (id) => `${API_BASE_URL}/api/playlist/${id}/addSong`,
+    removeSong: (id) => `${API_BASE_URL}/api/playlist/${id}/removeSong`
   }
 };

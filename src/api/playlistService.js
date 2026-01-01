@@ -135,5 +135,25 @@ export const playlistService = {
       console.error('Error adding song to playlist:', error);
       throw error;
     }
+  },
+
+  /**
+   * Remove a song from a playlist
+   */
+  removeSongFromPlaylist: async (playlistId, playlistSongId) => {
+    try {
+      const response = await fetchWithAuth(
+        API_ENDPOINTS.playlist.removeSong(playlistId),
+        {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playlistSongId })
+        }
+      );
+      return response;
+    } catch (error) {
+      console.error('Error removing song from playlist:', error);
+      throw error;
+    }
   }
 };

@@ -93,6 +93,25 @@ const Sidebar = ({ selectedCategory, setSelectedCategory }) => {
                 <span className="font-medium text-sm">Playlists</span>
               </button>
             </li>
+            <li>
+              <button
+                onClick={() => setSelectedCategory('History')}
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 group border ${
+                  selectedCategory === 'History'
+                    ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 shadow-lg shadow-cyan-500/20 border-cyan-500/30'
+                    : 'text-gray-400 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-700/50 hover:text-white border-transparent hover:border-gray-700/50'
+                }`}
+              >
+                <ClockIcon
+                  className={`w-4 h-4 transition-transform ${
+                    selectedCategory === 'History'
+                      ? 'drop-shadow-[0_0_5px_rgba(0,217,255,0.5)]'
+                      : 'group-hover:scale-110'
+                  }`}
+                />
+                <span className="font-medium text-sm">History</span>
+              </button>
+            </li>
           </ul>
         </div>
       </nav>

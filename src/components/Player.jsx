@@ -17,6 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import { musicService } from '../api/musicService';
+import AudioVisualizer from './AudioVisualizer';
 
 const Player = ({
   currentSong,
@@ -894,13 +895,28 @@ const Player = ({
         </div>
 
         {/* Album Art */}
-        <div className="relative flex-shrink-0 p-4 flex justify-center items-center">
-          <div className="relative group">
-            <div className="absolute -inset-2 bg-gradient-to-r from-amber-300 to-yellow-300 rounded-xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
+        <div className="relative flex-shrink-0 flex justify-center items-center">
+          {/* Wave Animation Background - Full Width */}
+          <div className="absolute inset-0 overflow-hidden bg-gradient-to-b from-gray-900 via-black to-gray-900">
+            <AudioVisualizer
+              width={344}
+              height={240}
+              pointSize={2.5}
+              waveSpeed={1.5}
+              waveIntensity={6}
+              particleColor="#00d9ff"
+              gridDistance={4}
+              audioRef={audioRef}
+              audioSrc={currentSong?.media_url}
+              isPlaying={isPlaying}
+            />
+          </div>
+          <div className="relative group py-6">
+            <div className="absolute -inset-2 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-xl blur-xl opacity-60 group-hover:opacity-80 transition-opacity"></div>
             <img
               src={currentSong.image}
               alt={currentSong.song}
-              className={`relative w-40 h-40 rounded-xl object-cover border-2 border-white/30 shadow-2xl transition-transform duration-300 ${
+              className={`relative w-40 h-40 rounded-xl object-cover border-2 border-cyan-400/60 shadow-2xl transition-transform duration-300 ${
                 isPlaying ? 'scale-105' : 'scale-100'
               }`}
             />
@@ -910,7 +926,7 @@ const Player = ({
                   {[...Array(4)].map((_, i) => (
                     <div
                       key={i}
-                      className="w-1 bg-white rounded-full animate-pulse"
+                      className="w-1 bg-cyan-400 rounded-full animate-pulse"
                       style={{
                         height: '20px',
                         animationDelay: `${i * 0.15}s`,

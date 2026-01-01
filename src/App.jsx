@@ -8,7 +8,9 @@ import Podcasts from './components/Podcasts';
 import LikedSongs from './components/LikedSongs';
 import Playlists from './components/Playlists';
 import Profile from './components/Profile';
+import History from './components/History';
 import { musicService, recentlyPlayedService } from './api/musicService';
+import { authService } from './api/authService';
 import { useAuth } from './context/AuthContext';
 
 function App() {
@@ -62,6 +64,32 @@ function App() {
       setShowPlayer(true);
     }
   }, [currentSong]);
+
+  // Load last played song when user logs in
+  useEffect(() => {
+    const loadLastPlayedSong = async () => {
+      if (!isAuthenticated) return;
+
+      try {
+        const response = await authService.getLastPlayedSong();
+
+        if (response.status === 'success' && response.data.song) {
+          const lastSong = response.data.song;
+          console.log('Loading last played song:', lastSong.song);
+
+          // Set the song but don't auto-play it
+          setCurrentSong(lastSong);
+          setShowPlayer(true);
+          // Don't set isPlaying to true - let user manually play
+        }
+      } catch (error) {
+        console.warn('Could not load last played song:', error);
+        // Don't show error to user, just log it
+      }
+    };
+
+    loadLastPlayedSong();
+  }, [isAuthenticated]);
 
   // Fetch songs from backend on component mount or category change
   useEffect(() => {
@@ -138,6 +166,14 @@ function App() {
     // Wait for React to update the audio src, then play
     setTimeout(() => {
       if (audioRef.current) {
+        try {
+          // ensure not muted and reasonable volume
+          audioRef.current.muted = false;
+          audioRef.current.volume = audioRef.current.volume || 1;
+        } catch (e) {
+          console.warn('Failed to set audio properties before play:', e);
+        }
+
         audioRef.current.load();
         audioRef.current.play().catch((err) => {
           console.error('Playback error:', err);
@@ -236,6 +272,12 @@ function App() {
               playSong={playSong}
               isPlaying={isPlaying}
             />
+          ) : selectedCategory === 'History' ? (
+            <History
+              currentSong={currentSong}
+              playSong={playSong}
+              isPlaying={isPlaying}
+            />
           ) : (
             <div className="flex-1 overflow-y-auto px-6 pb-32">
               {loading && (
@@ -316,6 +358,9 @@ function App() {
           <audio
             ref={audioRef}
             src={currentSong.media_url}
+            crossOrigin="anonymous"
+            preload="metadata"
+            playsInline
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
           />

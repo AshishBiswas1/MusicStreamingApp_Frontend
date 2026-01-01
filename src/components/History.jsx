@@ -1,68 +1,79 @@
 import React, { useState, useEffect } from 'react';
-import { playlistService } from '../api/playlistService';
-import {
-  ArrowLeftIcon,
-  PlayIcon,
-  PauseIcon,
-  TrashIcon
-} from '@heroicons/react/24/solid';
+import { API_ENDPOINTS } from '../api/config';
+import { PlayIcon, PauseIcon, ClockIcon } from '@heroicons/react/24/solid';
 
-const PlaylistSongs = ({
-  playlistId,
-  playlistName,
-  onBack,
-  currentSong,
-  playSong,
-  isPlaying
-}) => {
-  const [songs, setSongs] = useState([]);
+const History = ({ currentSong, playSong, isPlaying }) => {
+  const [historyData, setHistoryData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [removingId, setRemovingId] = useState(null);
 
   useEffect(() => {
-    if (playlistId) {
-      fetchPlaylistSongs();
-    }
-  }, [playlistId]);
+    fetchHistory();
+  }, []);
 
-  const fetchPlaylistSongs = async () => {
+  const fetchHistory = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await playlistService.getPlaylistSongs(playlistId);
-      setSongs(data);
+
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('Please login to view your listening history');
+      }
+
+      const response = await fetch(API_ENDPOINTS.recentlyPlayed.getMusic(), {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Session expired. Please login again');
+        }
+        throw new Error('Failed to fetch history');
+      }
+
+      const result = await response.json();
+
+      // Extract songs from the response structure
+      const songs = result.data
+        .map((item) => ({
+          ...item.song_id,
+          played_at: item.played_at,
+          history_id: item.id
+        }))
+        .filter((song) => song.id); // Filter out any null songs
+
+      setHistoryData(songs);
     } catch (err) {
-      setError(err.message || 'Failed to fetch playlist songs');
+      setError(err.message || 'Failed to load history');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRemoveSong = async (e, song) => {
-    e.stopPropagation(); // Prevent triggering playSong
+  const formatDateTime = (dateString) => {
+    if (!dateString) return '--';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
 
-    if (!window.confirm(`Remove "${song.song}" from this playlist?`)) {
-      return;
-    }
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
 
-    try {
-      setRemovingId(song.playlist_song_id);
-      setError(null);
-      await playlistService.removeSongFromPlaylist(
-        playlistId,
-        song.playlist_song_id
-      );
-
-      // Remove song from local state
-      setSongs((prevSongs) =>
-        prevSongs.filter((s) => s.playlist_song_id !== song.playlist_song_id)
-      );
-    } catch (err) {
-      setError(err.message || 'Failed to remove song');
-    } finally {
-      setRemovingId(null);
-    }
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
   };
 
   const formatDuration = (seconds) => {
@@ -78,7 +89,7 @@ const PlaylistSongs = ({
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400 mb-4"></div>
-            <p className="text-gray-400">Loading songs...</p>
+            <p className="text-gray-400">Loading history...</p>
           </div>
         </div>
       </div>
@@ -89,51 +100,55 @@ const PlaylistSongs = ({
     <div className="flex-1 overflow-y-auto px-6 pb-32">
       {/* Header */}
       <div className="pt-6 mb-8">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
-        >
-          <ArrowLeftIcon className="w-5 h-5" />
-          <span>Back to Playlists</span>
-        </button>
-
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
-          {playlistName}
-        </h1>
-        <p className="text-gray-400">
-          {songs.length} {songs.length === 1 ? 'song' : 'songs'}
-        </p>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-purple-500 rounded-full flex items-center justify-center">
+            <ClockIcon className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+              Listening History
+            </h1>
+            <p className="text-gray-400 mt-1">
+              {historyData.length} {historyData.length === 1 ? 'song' : 'songs'}{' '}
+              played
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Error Message */}
       {error && (
         <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
           <p className="text-red-400">{error}</p>
+          <button
+            onClick={fetchHistory}
+            className="mt-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+          >
+            Try again
+          </button>
         </div>
       )}
 
       {/* Empty State */}
-      {!loading && songs.length === 0 && (
+      {!loading && historyData.length === 0 && (
         <div className="flex flex-col items-center justify-center h-64 text-center">
           <div className="text-6xl mb-4">🎵</div>
           <h3 className="text-xl font-semibold text-gray-300 mb-2">
-            No songs in this playlist yet
+            No listening history yet
           </h3>
-          <p className="text-gray-500">
-            Add songs to this playlist to start listening
-          </p>
+          <p className="text-gray-500">Songs you play will appear here</p>
         </div>
       )}
 
-      {/* Songs Grid */}
-      {songs.length > 0 && (
+      {/* History Grid */}
+      {historyData.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {songs.map((song) => {
+          {historyData.map((song) => {
             const isCurrentSong = currentSong && currentSong.id === song.id;
 
             return (
               <div
-                key={song.playlist_song_id}
+                key={song.history_id}
                 className={`group relative bg-gradient-to-br from-gray-800/30 to-gray-900/30 rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 cursor-pointer ${
                   isCurrentSong
                     ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-400/50'
@@ -183,6 +198,11 @@ const PlaylistSongs = ({
                       ))}
                     </div>
                   )}
+
+                  {/* Played Time Badge */}
+                  <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/70 backdrop-blur-sm rounded text-xs text-gray-300">
+                    {formatDateTime(song.played_at)}
+                  </div>
                 </div>
 
                 {/* Song Info */}
@@ -201,26 +221,6 @@ const PlaylistSongs = ({
                     <span>{song.year || '----'}</span>
                     <span>{formatDuration(song.duration)}</span>
                   </div>
-
-                  {/* Remove Button */}
-                  <button
-                    onClick={(e) => handleRemoveSong(e, song)}
-                    disabled={removingId === song.playlist_song_id}
-                    className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Remove from playlist"
-                  >
-                    {removingId === song.playlist_song_id ? (
-                      <>
-                        <div className="w-3 h-3 border-t-2 border-red-400 border-solid rounded-full animate-spin"></div>
-                        <span className="text-xs">Removing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <TrashIcon className="w-3 h-3" />
-                        <span className="text-xs">Remove</span>
-                      </>
-                    )}
-                  </button>
                 </div>
               </div>
             );
@@ -231,4 +231,4 @@ const PlaylistSongs = ({
   );
 };
 
-export default PlaylistSongs;
+export default History;
