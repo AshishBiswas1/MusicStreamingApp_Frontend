@@ -58,5 +58,15 @@ export const API_ENDPOINTS = {
     getMe: () => `${API_BASE_URL}/api/user/me`,
     updateMe: () => `${API_BASE_URL}/api/user/updateMe`,
     deleteMe: () => `${API_BASE_URL}/api/user/deleteMe`
+  },
+
+  // Playlist endpoints
+  playlist: {
+    getAll: () => `${API_BASE_URL}/api/playlist`,
+    create: () => `${API_BASE_URL}/api/playlist`,
+    getById: (id) => `${API_BASE_URL}/api/playlist/${id}`,
+    delete: (id) => `${API_BASE_URL}/api/playlist/${id}`,
+    getSongs: (id) => `${API_BASE_URL}/api/playlist/${id}/songs`,
+    addSong: (id) => `${API_BASE_URL}/api/playlist/${id}/addSong`
   }
 };

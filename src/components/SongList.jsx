@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { PlayIcon, PauseIcon } from '@heroicons/react/24/solid';
+import { PlayIcon, PauseIcon, PlusIcon } from '@heroicons/react/24/solid';
 import { recentlyPlayedService } from '../api/musicService';
+import AddToPlaylistModal from './AddToPlaylistModal';
 
 const SongList = ({
   songs,
@@ -18,6 +19,8 @@ const SongList = ({
   };
 
   const [recentlyPlayed, setRecentlyPlayed] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSongForPlaylist, setSelectedSongForPlaylist] = useState(null);
 
   useEffect(() => {
     // Only fetch if user is authenticated
@@ -42,8 +45,20 @@ const SongList = ({
     };
   }, [refreshTrigger, isAuthenticated]);
 
+  const handleAddToPlaylist = (song, e) => {
+    e.stopPropagation();
+    setSelectedSongForPlaylist(song);
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="py-6">
+      <AddToPlaylistModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        song={selectedSongForPlaylist}
+      />
+
       {/* Recently Played Section (only shown when authenticated and has data) */}
       {isAuthenticated && recentlyPlayed && recentlyPlayed.length > 0 && (
         <section className="mb-8">
@@ -79,6 +94,13 @@ const SongList = ({
                           'https://via.placeholder.com/400x400?text=Song')
                       }
                     />
+                    <button
+                      onClick={(e) => handleAddToPlaylist(songObj, e)}
+                      className="absolute top-3 right-3 p-2 bg-black/60 hover:bg-cyan-600/80 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+                      title="Add to playlist"
+                    >
+                      <PlusIcon className="w-5 h-5 text-white" />
+                    </button>
                   </div>
                   <div className="p-3">
                     <div
@@ -152,19 +174,28 @@ const SongList = ({
                         'https://via.placeholder.com/400x400?text=Song';
                     }}
                   />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      playSong(song);
-                    }}
-                    className="absolute top-3 right-3 p-2 bg-black/60 hover:bg-black/80 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
-                  >
-                    {isCurrentSong && isPlaying ? (
-                      <PauseIcon className="w-5 h-5 text-cyan-400" />
-                    ) : (
-                      <PlayIcon className="w-5 h-5 text-white" />
-                    )}
-                  </button>
+                  <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                    <button
+                      onClick={(e) => handleAddToPlaylist(song, e)}
+                      className="p-2 bg-black/60 hover:bg-cyan-600/80 rounded-full backdrop-blur-sm transition-all"
+                      title="Add to playlist"
+                    >
+                      <PlusIcon className="w-5 h-5 text-white" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        playSong(song);
+                      }}
+                      className="p-2 bg-black/60 hover:bg-black/80 rounded-full backdrop-blur-sm transition-all"
+                    >
+                      {isCurrentSong && isPlaying ? (
+                        <PauseIcon className="w-5 h-5 text-cyan-400" />
+                      ) : (
+                        <PlayIcon className="w-5 h-5 text-white" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="p-3">

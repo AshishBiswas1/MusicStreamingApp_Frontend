@@ -102,6 +102,40 @@ export const authService = {
   },
 
   /**
+   * Update current user profile (name and/or profile image)
+   */
+  updateMe: async (formData) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(API_ENDPOINTS.user.updateMe(), {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData // FormData for file upload
+      });
+
+      if (!response.ok) {
+        const error = await response
+          .json()
+          .catch(() => ({ message: 'Failed to update profile' }));
+        throw new Error(
+          error.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Logout user
    */
   logout: () => {

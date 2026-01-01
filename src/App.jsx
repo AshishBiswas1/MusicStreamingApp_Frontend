@@ -6,6 +6,8 @@ import Player from './components/Player';
 import NowPlaying from './components/NowPlaying';
 import Podcasts from './components/Podcasts';
 import LikedSongs from './components/LikedSongs';
+import Playlists from './components/Playlists';
+import Profile from './components/Profile';
 import { musicService, recentlyPlayedService } from './api/musicService';
 import { useAuth } from './context/AuthContext';
 
@@ -17,6 +19,7 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showNowPlaying, setShowNowPlaying] = useState(false);
   const [showPlayer, setShowPlayer] = useState(true);
+  const [showProfile, setShowProfile] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [recentlyPlayedRefresh, setRecentlyPlayedRefresh] = useState(0);
@@ -210,13 +213,25 @@ function App() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
-          <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+          <Header
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            onSettingsClick={() => setShowProfile(true)}
+          />
 
-          {/* Conditional Content: Podcasts or Song List */}
-          {selectedCategory === 'Podcasts' ? (
+          {/* Conditional Content: Profile, Podcasts, or Song List */}
+          {showProfile ? (
+            <Profile onBack={() => setShowProfile(false)} />
+          ) : selectedCategory === 'Podcasts' ? (
             <Podcasts />
           ) : selectedCategory === 'Liked Songs' ? (
             <LikedSongs
+              currentSong={currentSong}
+              playSong={playSong}
+              isPlaying={isPlaying}
+            />
+          ) : selectedCategory === 'Playlists' ? (
+            <Playlists
               currentSong={currentSong}
               playSong={playSong}
               isPlaying={isPlaying}

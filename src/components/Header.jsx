@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import Login from './Login';
 import Signup from './Signup';
 
-const Header = ({ searchQuery, setSearchQuery }) => {
+const Header = ({ searchQuery, setSearchQuery, onSettingsClick }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
@@ -69,7 +69,10 @@ const Header = ({ searchQuery, setSearchQuery }) => {
 
         {/* User Actions */}
         <div className="flex items-center gap-3 ml-6">
-          <button className="p-2.5 bg-gradient-to-br from-gray-800/50 to-gray-900/50 hover:from-gray-700/50 hover:to-gray-800/50 border border-gray-700/50 rounded-xl transition-all duration-300 group hover:shadow-lg hover:shadow-cyan-500/10">
+          <button
+            onClick={onSettingsClick}
+            className="p-2.5 bg-gradient-to-br from-gray-800/50 to-gray-900/50 hover:from-gray-700/50 hover:to-gray-800/50 border border-gray-700/50 rounded-xl transition-all duration-300 group hover:shadow-lg hover:shadow-cyan-500/10"
+          >
             <Cog6ToothIcon className="w-5 h-5 text-gray-400 group-hover:text-cyan-400 group-hover:rotate-90 transition-all duration-300" />
           </button>
 

@@ -10,7 +10,11 @@ import {
   ArrowsPointingOutIcon,
   MinusIcon
 } from '@heroicons/react/24/solid';
-import { ArrowPathIcon, HeartIcon } from '@heroicons/react/24/outline';
+import {
+  ArrowPathIcon,
+  HeartIcon,
+  ArrowsRightLeftIcon
+} from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import { musicService } from '../api/musicService';
 
@@ -31,6 +35,7 @@ const Player = ({
   const [isMuted, setIsMuted] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [repeatMode, setRepeatMode] = useState('none'); // 'none', 'single', 'all'
+  const [isShuffle, setIsShuffle] = useState(false);
   const [isPiPSupported, setIsPiPSupported] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [position, setPosition] = useState({
@@ -232,7 +237,18 @@ const Player = ({
     });
   };
 
+  const toggleShuffle = () => {
+    setIsShuffle((prev) => !prev);
+  };
+
   const toggleMinimize = () => {
+    if (!isMinimized) {
+      // When minimizing, set position to be at bottom of sidebar
+      setPosition({
+        x: 20,
+        y: typeof window !== 'undefined' ? window.innerHeight - 150 : 0
+      });
+    }
     setIsMinimized(!isMinimized);
   };
 
@@ -746,15 +762,12 @@ const Player = ({
         style={{
           left: `${position.x}px`,
           top: `${position.y}px`,
-          width: '280px'
+          width: '344px'
         }}
       >
         <div className="bg-gradient-to-r from-amber-600/95 via-orange-500/95 to-amber-600/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
           {/* Minimized Header */}
-          <div
-            className="flex items-center justify-between p-3 cursor-move select-none"
-            onMouseDown={handleMouseDown}
-          >
+          <div className="flex items-center justify-between p-3 select-none">
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <img
                 src={currentSong.image}
@@ -798,21 +811,18 @@ const Player = ({
     <div
       className="fixed z-50 transition-all duration-300"
       style={{
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-        width: '400px',
-        height: '500px'
+        left: '20px',
+        bottom: '20px',
+        width: '344px',
+        maxHeight: 'calc(100vh - 320px)'
       }}
     >
-      <div className="h-full bg-gradient-to-br from-amber-600/95 via-orange-500/95 to-amber-600/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 overflow-hidden flex flex-col">
+      <div className="bg-gradient-to-br from-amber-600/95 via-orange-500/95 to-amber-600/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 overflow-y-auto flex flex-col">
         {/* Glass shine effect */}
         <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-black/30 pointer-events-none rounded-2xl"></div>
 
-        {/* Header with drag handle */}
-        <div
-          className="relative px-4 py-3 border-b border-white/20 cursor-move select-none flex items-center justify-between"
-          onMouseDown={handleMouseDown}
-        >
+        {/* Header */}
+        <div className="relative px-4 py-3 border-b border-white/20 select-none flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex gap-1.5">
               <button
@@ -878,32 +888,31 @@ const Player = ({
               </button>
             </div>
           </div>
-          <h3 className="text-white/90 text-sm font-semibold absolute left-1/2 transform -translate-x-1/2">
+          <h3 className="text-white/90 text-xs font-semibold absolute left-1/2 transform -translate-x-1/2">
             Now Playing
           </h3>
-          <div className="text-xs text-white/60">Tab-independent mode ↗</div>
         </div>
 
         {/* Album Art */}
-        <div className="relative flex-shrink-0 p-6 flex justify-center items-center">
+        <div className="relative flex-shrink-0 p-4 flex justify-center items-center">
           <div className="relative group">
-            <div className="absolute -inset-4 bg-gradient-to-r from-amber-300 to-yellow-300 rounded-3xl blur-2xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
+            <div className="absolute -inset-2 bg-gradient-to-r from-amber-300 to-yellow-300 rounded-xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
             <img
               src={currentSong.image}
               alt={currentSong.song}
-              className={`relative w-48 h-48 rounded-2xl object-cover border-4 border-white/30 shadow-2xl transition-transform duration-300 ${
+              className={`relative w-40 h-40 rounded-xl object-cover border-2 border-white/30 shadow-2xl transition-transform duration-300 ${
                 isPlaying ? 'scale-105' : 'scale-100'
               }`}
             />
             {isPlaying && (
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/50 via-transparent to-transparent flex items-center justify-center">
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-black/50 via-transparent to-transparent flex items-center justify-center">
                 <div className="flex gap-1">
                   {[...Array(4)].map((_, i) => (
                     <div
                       key={i}
                       className="w-1 bg-white rounded-full animate-pulse"
                       style={{
-                        height: '24px',
+                        height: '20px',
                         animationDelay: `${i * 0.15}s`,
                         animationDuration: '1s'
                       }}
@@ -916,18 +925,18 @@ const Player = ({
         </div>
 
         {/* Song Info */}
-        <div className="relative px-6 pb-4 text-center">
-          <h2 className="text-white font-bold text-lg truncate drop-shadow-md">
+        <div className="relative px-4 pb-3 text-center">
+          <h2 className="text-white font-bold text-sm truncate drop-shadow-md">
             {currentSong.song}
           </h2>
-          <p className="text-white/80 text-sm truncate">
+          <p className="text-white/80 text-xs truncate">
             {currentSong.music || 'Unknown Artist'}
           </p>
         </div>
 
         {/* Progress Bar */}
-        <div className="relative px-6 pb-4 no-drag">
-          <div className="flex items-center gap-3 mb-2">
+        <div className="relative px-4 pb-3 no-drag">
+          <div className="flex items-center gap-2 mb-2">
             <span className="text-xs text-white/80 font-mono w-12 text-right">
               {formatTime(currentTime)}
             </span>
@@ -952,11 +961,23 @@ const Player = ({
         </div>
 
         {/* Controls */}
-        <div className="relative px-6 pb-4 no-drag">
-          <div className="flex items-center justify-center gap-4">
+        <div className="relative px-4 pb-3 no-drag">
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={toggleShuffle}
+              className={`p-2 rounded-lg transition-all border backdrop-blur-sm ${
+                isShuffle
+                  ? 'bg-white/30 border-white/50 text-white'
+                  : 'bg-white/10 border-white/20 text-white/70 hover:bg-white/20'
+              }`}
+              title={isShuffle ? 'Shuffle: On' : 'Shuffle: Off'}
+            >
+              <ArrowsRightLeftIcon className="w-5 h-5" />
+            </button>
+
             <button
               onClick={toggleRepeat}
-              className={`p-2.5 rounded-lg transition-all border backdrop-blur-sm ${
+              className={`p-2 rounded-lg transition-all border backdrop-blur-sm ${
                 repeatMode !== 'none'
                   ? 'bg-white/30 border-white/50 text-white'
                   : 'bg-white/10 border-white/20 text-white/70 hover:bg-white/20'
@@ -980,45 +1001,45 @@ const Player = ({
 
             <button
               onClick={playPrevious}
-              className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/20 hover:border-white/40 hover:scale-110 backdrop-blur-sm group"
+              className="p-2.5 bg-white/10 hover:bg-white/20 rounded-lg transition-all border border-white/20 hover:border-white/40 hover:scale-110 backdrop-blur-sm group"
             >
-              <BackwardIcon className="w-6 h-6 text-white/90 group-hover:text-white transition-all transform group-hover:-translate-x-0.5" />
+              <BackwardIcon className="w-5 h-5 text-white/90 group-hover:text-white transition-all transform group-hover:-translate-x-0.5" />
             </button>
 
             <button
               onClick={togglePlay}
-              className="relative p-5 bg-white hover:bg-white/90 rounded-full transition-all shadow-2xl hover:scale-110 group"
+              className="relative p-4 bg-white hover:bg-white/90 rounded-full transition-all shadow-2xl hover:scale-110 group"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-yellow-400 rounded-full blur-xl opacity-50 group-hover:opacity-75 transition-opacity"></div>
               {isPlaying ? (
-                <PauseIcon className="relative w-7 h-7 text-orange-600 transition-transform group-hover:scale-110" />
+                <PauseIcon className="relative w-6 h-6 text-orange-600 transition-transform group-hover:scale-110" />
               ) : (
-                <PlayIcon className="relative w-7 h-7 text-orange-600 ml-1 transition-transform group-hover:scale-110" />
+                <PlayIcon className="relative w-6 h-6 text-orange-600 ml-0.5 transition-transform group-hover:scale-110" />
               )}
             </button>
 
             <button
               onClick={playNext}
-              className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/20 hover:border-white/40 hover:scale-110 backdrop-blur-sm group"
+              className="p-2.5 bg-white/10 hover:bg-white/20 rounded-lg transition-all border border-white/20 hover:border-white/40 hover:scale-110 backdrop-blur-sm group"
             >
-              <ForwardIcon className="w-6 h-6 text-white/90 group-hover:text-white transition-all transform group-hover:translate-x-0.5" />
+              <ForwardIcon className="w-5 h-5 text-white/90 group-hover:text-white transition-all transform group-hover:translate-x-0.5" />
             </button>
 
             <button
               onClick={handleLikeSong}
-              className="p-2.5 bg-white/10 hover:bg-white/20 rounded-lg transition-all border border-white/20 hover:border-white/40 hover:scale-110 backdrop-blur-sm group"
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all border border-white/20 hover:border-white/40 hover:scale-110 backdrop-blur-sm group"
               title={isLiked ? 'Liked' : 'Like this song'}
             >
               {isLiked ? (
-                <HeartIconSolid className="w-6 h-6 text-red-500" />
+                <HeartIconSolid className="w-5 h-5 text-red-500" />
               ) : (
-                <HeartIcon className="w-6 h-6 text-white/90 group-hover:text-red-400 transition-colors" />
+                <HeartIcon className="w-5 h-5 text-white/90 group-hover:text-red-400 transition-colors" />
               )}
             </button>
 
             <button
               onClick={() => setShowNowPlaying(true)}
-              className="p-2.5 bg-white/10 hover:bg-white/20 rounded-lg transition-all border border-white/20 hover:border-white/40 hover:scale-110 backdrop-blur-sm"
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all border border-white/20 hover:border-white/40 hover:scale-110 backdrop-blur-sm"
             >
               <QueueListIcon className="w-5 h-5 text-white/90" />
             </button>
@@ -1026,7 +1047,7 @@ const Player = ({
         </div>
 
         {/* Volume Control */}
-        <div className="relative px-6 pb-6 no-drag">
+        <div className="relative px-4 pb-4 no-drag">
           <div className="flex items-center gap-3 justify-center">
             <button
               onClick={toggleMute}
@@ -1044,7 +1065,7 @@ const Player = ({
               max="100"
               value={isMuted ? 0 : volume * 100}
               onChange={handleVolumeChange}
-              className="w-32 h-2 bg-black/20 rounded-full appearance-none cursor-pointer border border-white/20"
+              className="flex-1 h-2 bg-black/20 rounded-full appearance-none cursor-pointer border border-white/20"
               style={{
                 background: `linear-gradient(to right, #ffffff 0%, #fef3c7 ${
                   isMuted ? 0 : volume * 100
