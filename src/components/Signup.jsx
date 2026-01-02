@@ -24,10 +24,12 @@ const Signup = ({ onSwitchToLogin, onClose }) => {
 
     try {
       await signup(name, email, password);
-      setSuccess('Account created successfully! Please login.');
-      setTimeout(() => {
-        onSwitchToLogin();
-      }, 2000);
+      setSuccess(
+        'Account created successfully! A confirmation link has been sent to your registered email. Please confirm your email to continue.'
+      );
+      setName('');
+      setEmail('');
+      setPassword('');
     } catch (err) {
       setError(err.message || 'Signup failed. Please try again.');
     } finally {
