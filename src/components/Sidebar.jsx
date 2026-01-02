@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   HomeIcon,
   MusicalNoteIcon,
@@ -6,10 +6,13 @@ import {
   HeartIcon,
   ClockIcon,
   SparklesIcon,
-  MicrophoneIcon
+  MicrophoneIcon,
+  ChevronDownIcon
 } from '@heroicons/react/24/outline';
 
 const Sidebar = ({ selectedCategory, setSelectedCategory }) => {
+  const [songsOpen, setSongsOpen] = useState(true);
+  const [podcastsOpen, setPodcastsOpen] = useState(false);
   const categories = [
     { name: 'All', icon: HomeIcon },
     { name: 'Recommended', icon: SparklesIcon },
@@ -39,37 +42,83 @@ const Sidebar = ({ selectedCategory, setSelectedCategory }) => {
         <h2 className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-3 px-2">
           Browse
         </h2>
-        <ul className="space-y-1.5">
-          {categories.map((category) => {
-            const Icon = category.icon;
-            return (
-              <li key={category.name}>
+
+        {/* Songs Dropdown */}
+        <div className="mb-3">
+          <button
+            onClick={() => setSongsOpen((v) => !v)}
+            className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-gray-400 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-700/50 hover:text-white transition-all duration-300 group border border-transparent hover:border-gray-700/50"
+          >
+            <div className="flex items-center gap-2">
+              <HomeIcon className="w-4 h-4" />
+              <span className="font-medium">Songs</span>
+            </div>
+            <ChevronDownIcon
+              className={`w-4 h-4 transition-transform ${
+                songsOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+
+          {songsOpen && (
+            <ul className="mt-2 space-y-1.5 pl-2">
+              <li>
                 <button
-                  onClick={() => setSelectedCategory(category.name)}
+                  onClick={() => setSelectedCategory('All')}
                   className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 group relative overflow-hidden ${
-                    selectedCategory === category.name
-                      ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 shadow-lg shadow-cyan-500/20 border border-cyan-500/30'
-                      : 'text-gray-400 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-700/50 hover:text-white border border-transparent hover:border-gray-700/50'
+                    selectedCategory === 'All'
+                      ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 shadow-lg'
+                      : 'text-gray-400 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-700/50 hover:text-white'
                   }`}
                 >
-                  {selectedCategory === category.name && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 animate-shimmer"></div>
-                  )}
-                  <Icon
-                    className={`w-4 h-4 z-10 transition-all ${
-                      selectedCategory === category.name
-                        ? 'drop-shadow-[0_0_5px_rgba(0,217,255,0.5)]'
-                        : 'group-hover:scale-110'
-                    }`}
-                  />
-                  <span className="font-medium z-10">{category.name}</span>
+                  <HomeIcon className="w-4 h-4 z-10" />
+                  <span className="font-medium z-10">All Songs</span>
                 </button>
               </li>
-            );
-          })}
-        </ul>
+              <li>
+                <button
+                  onClick={() => setSelectedCategory('Recommended')}
+                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 group relative overflow-hidden ${
+                    selectedCategory === 'Recommended'
+                      ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 shadow-lg'
+                      : 'text-gray-400 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-700/50 hover:text-white'
+                  }`}
+                >
+                  <SparklesIcon className="w-4 h-4 z-10" />
+                  <span className="font-medium z-10">Recommended</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setSelectedCategory('History')}
+                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 group relative overflow-hidden ${
+                    selectedCategory === 'History'
+                      ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 shadow-lg'
+                      : 'text-gray-400 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-700/50 hover:text-white'
+                  }`}
+                >
+                  <ClockIcon className="w-4 h-4 z-10" />
+                  <span className="font-medium z-10">History</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setSelectedCategory('Playlists')}
+                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 group relative overflow-hidden ${
+                    selectedCategory === 'Playlists'
+                      ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 shadow-lg'
+                      : 'text-gray-400 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-700/50 hover:text-white'
+                  }`}
+                >
+                  <QueueListIcon className="w-4 h-4 z-10" />
+                  <span className="font-medium z-10">Playlists</span>
+                </button>
+              </li>
+            </ul>
+          )}
+        </div>
 
-        {/* Playlists */}
+        {/* Your Library - Liked / Playlists / Podcasts */}
         <div className="mt-4">
           <h2 className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-3 px-2">
             Your Library
@@ -84,35 +133,69 @@ const Sidebar = ({ selectedCategory, setSelectedCategory }) => {
                 <span className="font-medium text-sm">Liked Songs</span>
               </button>
             </li>
-            <li>
-              <button
-                onClick={() => setSelectedCategory('Playlists')}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-gray-400 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-700/50 hover:text-white transition-all duration-300 group border border-transparent hover:border-gray-700/50"
-              >
-                <QueueListIcon className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span className="font-medium text-sm">Playlists</span>
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => setSelectedCategory('History')}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 group border ${
-                  selectedCategory === 'History'
-                    ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 shadow-lg shadow-cyan-500/20 border-cyan-500/30'
-                    : 'text-gray-400 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-700/50 hover:text-white border-transparent hover:border-gray-700/50'
-                }`}
-              >
-                <ClockIcon
-                  className={`w-4 h-4 transition-transform ${
-                    selectedCategory === 'History'
-                      ? 'drop-shadow-[0_0_5px_rgba(0,217,255,0.5)]'
-                      : 'group-hover:scale-110'
-                  }`}
-                />
-                <span className="font-medium text-sm">History</span>
-              </button>
-            </li>
           </ul>
+
+          {/* Podcasts Dropdown */}
+          <div className="mt-3">
+            <button
+              onClick={() => setPodcastsOpen((v) => !v)}
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-gray-400 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-700/50 hover:text-white transition-all duration-300 group border border-transparent hover:border-gray-700/50"
+            >
+              <div className="flex items-center gap-2">
+                <MicrophoneIcon className="w-4 h-4" />
+                <span className="font-medium">Podcasts</span>
+              </div>
+              <ChevronDownIcon
+                className={`w-4 h-4 transition-transform ${
+                  podcastsOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            {podcastsOpen && (
+              <ul className="mt-2 space-y-1.5 pl-2">
+                <li>
+                  <button
+                    onClick={() => setSelectedCategory('Podcasts')}
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 group relative overflow-hidden ${
+                      selectedCategory === 'Podcasts'
+                        ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 shadow-lg'
+                        : 'text-gray-400 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-700/50 hover:text-white'
+                    }`}
+                  >
+                    <MicrophoneIcon className="w-4 h-4 z-10" />
+                    <span className="font-medium z-10">All Podcasts</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setSelectedCategory('PodcastHistory')}
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 group relative overflow-hidden ${
+                      selectedCategory === 'PodcastHistory'
+                        ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 shadow-lg'
+                        : 'text-gray-400 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-700/50 hover:text-white'
+                    }`}
+                  >
+                    <ClockIcon className="w-4 h-4 z-10" />
+                    <span className="font-medium z-10">Podcast History</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setSelectedCategory('PodcastRecently')}
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 group relative overflow-hidden ${
+                      selectedCategory === 'PodcastRecently'
+                        ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 shadow-lg'
+                        : 'text-gray-400 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-700/50 hover:text-white'
+                    }`}
+                  >
+                    <ClockIcon className="w-4 h-4 z-10" />
+                    <span className="font-medium z-10">Recently Played</span>
+                  </button>
+                </li>
+              </ul>
+            )}
+          </div>
         </div>
       </nav>
 

@@ -131,6 +131,31 @@ export const musicService = {
       throw error;
     }
   },
+  /**
+   * Update user's recommended list (array of strings)
+   * @param {string} userId
+   * @param {string[]} recommendedArr
+   */
+  updateRecommended: async (userId, recommendedArr) => {
+    try {
+      if (!userId) throw new Error('userId is required');
+      if (!Array.isArray(recommendedArr))
+        throw new Error('recommended must be an array of strings');
+
+      const data = await fetchWithAuth(
+        API_ENDPOINTS.music.updateRecommended(userId),
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ recommended: recommendedArr })
+        }
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error updating recommended:', error);
+      throw error;
+    }
+  },
 
   /**
    * Save recommended songs to songs table

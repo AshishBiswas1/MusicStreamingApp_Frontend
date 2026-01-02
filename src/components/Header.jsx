@@ -77,57 +77,31 @@ const Header = ({ searchQuery, setSearchQuery, onSettingsClick }) => {
           </button>
 
           {isAuthenticated && user ? (
-            <div className="relative" ref={profileMenuRef}>
-              <button
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 hover:from-cyan-500/20 hover:to-blue-500/20 border border-cyan-500/30 rounded-xl transition-all duration-300 group shadow-lg shadow-cyan-500/10 hover:shadow-cyan-500/20"
-              >
-                {getProfileImage() ? (
-                  <img
-                    src={getProfileImage()}
-                    alt={user.name}
-                    className="w-8 h-8 rounded-full object-cover border-2 border-cyan-400/50"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                )}
-                <span className="font-medium text-white hidden sm:inline max-w-[120px] truncate">
-                  {user.name}
-                </span>
-              </button>
-
-              {/* Profile Dropdown */}
-              {showProfileMenu && (
-                <div className="absolute right-0 mt-2 w-56 bg-gray-900 border border-gray-700/50 rounded-xl shadow-2xl overflow-hidden z-50 animate-slide-up">
-                  <div className="p-4 border-b border-gray-700/50">
-                    <p className="text-white font-medium truncate">
-                      {user.name}
-                    </p>
-                    <p className="text-gray-400 text-sm truncate">
-                      {user.email}
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 transition-colors"
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-xl shadow-lg shadow-cyan-500/10">
+              {getProfileImage() ? (
+                <img
+                  src={getProfileImage()}
+                  alt={user.name}
+                  className="w-8 h-8 rounded-full object-cover border-2 border-cyan-400/50"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
+                  <svg
+                    className="w-5 h-5 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
                   >
-                    <ArrowRightOnRectangleIcon className="w-5 h-5" />
-                    <span>Logout</span>
-                  </button>
+                    <path
+                      fillRule="evenodd"
+                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
                 </div>
               )}
+              <span className="font-medium text-white hidden sm:inline max-w-[120px] truncate">
+                {user.name}
+              </span>
             </div>
           ) : (
             <button

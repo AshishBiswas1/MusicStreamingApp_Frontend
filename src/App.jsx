@@ -241,10 +241,12 @@ function App() {
     <>
       <div className="flex h-screen bg-gradient-to-br from-[#0a0a0a] via-[#1a1a1a] to-[#0f0f0f] text-white">
         {/* Sidebar */}
-        <Sidebar
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-        />
+        {!showProfile && (
+          <Sidebar
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+          />
+        )}
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -258,8 +260,10 @@ function App() {
           {/* Conditional Content: Profile, Podcasts, or Song List */}
           {showProfile ? (
             <Profile onBack={() => setShowProfile(false)} />
-          ) : selectedCategory === 'Podcasts' ? (
-            <Podcasts />
+          ) : selectedCategory === 'Podcasts' ||
+            selectedCategory === 'PodcastHistory' ||
+            selectedCategory === 'PodcastRecently' ? (
+            <Podcasts viewMode={selectedCategory} />
           ) : selectedCategory === 'Liked Songs' ? (
             <LikedSongs
               currentSong={currentSong}

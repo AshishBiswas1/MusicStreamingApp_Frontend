@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { podcastService } from '../api/podcastService';
+import { recentlyPlayedService } from '../api/musicService';
 import PodcastPlayer from './PodcastPlayer';
 import {
   PlayIcon,
@@ -10,7 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
 
-const Podcasts = () => {
+const Podcasts = ({ viewMode }) => {
   const [podcasts, setPodcasts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,17 +28,38 @@ const Podcasts = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
 
-  // Fetch podcasts on mount
+  // Fetch podcasts on mount and when viewMode changes
   useEffect(() => {
     fetchPodcasts();
     fetchSavedPodcasts();
-  }, [currentPage]);
+  }, [currentPage, viewMode]);
 
   const fetchPodcasts = async () => {
     try {
       setLoading(true);
       setError(null);
       setErrorStatus(null);
+
+      // If viewMode is podcast history (server-side saved history)
+      if (viewMode === 'PodcastHistory') {
+        const data = await podcastService.getPodcastHistory();
+        // podcastService.getPodcastHistory() returns an array of podcast objects
+        setPodcasts(Array.isArray(data) ? data : []);
+        return;
+      }
+
+      // If viewMode is recently played podcasts (recently_played router)
+      if (viewMode === 'PodcastRecently') {
+        const rows = await recentlyPlayedService.getPlayedPodcast();
+        // rows are objects with `.podcast` populated (see backend). Map to podcast objects where available
+        const mapped = (Array.isArray(rows) ? rows : []).map(
+          (r) => r.podcast || r
+        );
+        setPodcasts(mapped.filter(Boolean));
+        return;
+      }
+
+      // Default: fetch best podcasts
       const data = await podcastService.getBestPodcasts(currentPage);
       setPodcasts(data);
     } catch (err) {

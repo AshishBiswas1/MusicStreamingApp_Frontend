@@ -22,6 +22,8 @@ export const API_ENDPOINTS = {
     getById: (id) => `${API_BASE_URL}/api/music/${id}`,
     upload: () => `${API_BASE_URL}/api/music/upload`,
     recommended: () => `${API_BASE_URL}/api/music/recommended`,
+    updateRecommended: (userId) =>
+      `${API_BASE_URL}/api/music/updateRecommended/${userId}`,
     saveToSongs: () => `${API_BASE_URL}/api/music/savetosongs`,
     likeSong: () => `${API_BASE_URL}/api/music/like`,
     unlikeSong: () => `${API_BASE_URL}/api/music/unlike`,

@@ -22,38 +22,51 @@ const WaveAnimation = ({
   const analyserRef = useRef(null);
   const dataArrayRef = useRef(null);
   const sourceRef = useRef(null);
-  const sourceCreatedRef = useRef(false);
 
   // Initialize audio analyzer
   useEffect(() => {
-    if (!audioSrc || !audioRef?.current || sourceCreatedRef.current) return;
+    if (!audioSrc || !audioRef?.current) return;
 
     console.log('Initializing audio visualizer for:', audioSrc);
 
     try {
-      const AudioContextClass =
-        window.AudioContext || window.webkitAudioContext;
-      const audioContext = new AudioContextClass();
-      audioContextRef.current = audioContext;
+      // Reuse existing audio context or create new one
+      if (!audioContextRef.current) {
+        const AudioContextClass =
+          window.AudioContext || window.webkitAudioContext;
+        const audioContext = new AudioContextClass();
+        audioContextRef.current = audioContext;
+        console.log('Audio context created, state:', audioContext.state);
+      }
 
-      console.log('Audio context created, state:', audioContext.state);
+      const audioContext = audioContextRef.current;
 
+      // Create analyser
       const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 512;
-      analyser.smoothingTimeConstant = 0.7;
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
       analyserRef.current = analyser;
 
       const bufferLength = analyser.frequencyBinCount;
       dataArrayRef.current = new Uint8Array(bufferLength);
 
-      console.log('Creating media element source...');
-      const source = audioContext.createMediaElementSource(audioRef.current);
-      sourceRef.current = source;
-      sourceCreatedRef.current = true;
-
-      console.log('Connecting audio graph: source -> analyser -> destination');
-      source.connect(analyser);
-      analyser.connect(audioContext.destination);
+      // Only create media element source once
+      if (!sourceRef.current) {
+        console.log('Creating media element source...');
+        const source = audioContext.createMediaElementSource(audioRef.current);
+        sourceRef.current = source;
+        console.log(
+          'Connecting audio graph: source -> analyser -> destination'
+        );
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+      } else {
+        // Reconnect existing source to new analyser
+        console.log('Reconnecting existing source to new analyser');
+        sourceRef.current.disconnect();
+        sourceRef.current.connect(analyser);
+        analyser.connect(audioContext.destination);
+      }
 
       console.log('Audio graph connected successfully');
 
@@ -198,27 +211,27 @@ const WaveAnimation = ({
       if (analyserRef.current && dataArrayRef.current && isPlaying) {
         analyserRef.current.getByteFrequencyData(dataArrayRef.current);
 
-        // Focus on bass frequencies (0-100 Hz range, roughly first 10-15 bins)
+        // Focus on bass frequencies (0-100 Hz range, roughly first 8-12 bins)
         let bassSum = 0;
-        const bassRange = 12;
+        const bassRange = 10;
         for (let i = 0; i < bassRange; i++) {
           bassSum += dataArrayRef.current[i];
         }
-        bassLevel = bassSum / (bassRange * 255);
+        bassLevel = (bassSum / (bassRange * 255)) * 2.5; // Amplify bass response
 
-        // Apply smoothing and amplification
+        // Apply less smoothing for more responsive beat detection
         const currentBass = mesh.material.uniforms.u_bass.value;
-        const smoothedBass = currentBass + (bassLevel - currentBass) * 0.3;
+        const smoothedBass = currentBass + (bassLevel - currentBass) * 0.6;
         mesh.material.uniforms.u_bass.value = smoothedBass;
 
         // Dynamic intensity based on overall energy
         let totalEnergy = 0;
-        for (let i = 0; i < 30; i++) {
+        for (let i = 0; i < 20; i++) {
           totalEnergy += dataArrayRef.current[i];
         }
-        const energyLevel = totalEnergy / (30 * 255);
+        const energyLevel = (totalEnergy / (20 * 255)) * 1.5;
         mesh.material.uniforms.u_intensity.value =
-          waveIntensity * (0.5 + energyLevel * 1.5);
+          waveIntensity * (0.7 + energyLevel * 2.0);
       } else {
         // Fade out when not playing
         mesh.material.uniforms.u_bass.value *= 0.95;
