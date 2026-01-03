@@ -41,7 +41,7 @@ const WaveAnimation = ({
 
       const audioContext = audioContextRef.current;
 
-      // Create analyser
+      // Always create a fresh analyser for each song
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
       analyser.smoothingTimeConstant = 0.8;
@@ -55,18 +55,17 @@ const WaveAnimation = ({
         console.log('Creating media element source...');
         const source = audioContext.createMediaElementSource(audioRef.current);
         sourceRef.current = source;
-        console.log(
-          'Connecting audio graph: source -> analyser -> destination'
-        );
-        source.connect(analyser);
-        analyser.connect(audioContext.destination);
-      } else {
-        // Reconnect existing source to new analyser
-        console.log('Reconnecting existing source to new analyser');
-        sourceRef.current.disconnect();
-        sourceRef.current.connect(analyser);
-        analyser.connect(audioContext.destination);
       }
+
+      // Always reconnect to ensure fresh connection
+      console.log('Connecting audio graph: source -> analyser -> destination');
+      try {
+        sourceRef.current.disconnect();
+      } catch (e) {
+        // Ignore disconnect errors
+      }
+      sourceRef.current.connect(analyser);
+      analyser.connect(audioContext.destination);
 
       console.log('Audio graph connected successfully');
 
