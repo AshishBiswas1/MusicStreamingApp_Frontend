@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_BASE_URL } from '../api/config';
 import {
   PlayIcon,
   PauseIcon,
@@ -58,14 +59,61 @@ const PodcastPlayer = ({
 
   // Load and play episode
   useEffect(() => {
-    if (currentEpisode && audioRef.current) {
-      audioRef.current.src = currentEpisode.audio;
-      audioRef.current.load();
+    if (!currentEpisode || !audioRef.current) return;
+
+    const audio = audioRef.current;
+    // revoke previous object URL if any
+    if (audio._objectUrl) {
+      try {
+        URL.revokeObjectURL(audio._objectUrl);
+      } catch (e) {}
+      audio._objectUrl = null;
+    }
+
+    const setSrcAndPlay = (src) => {
+      audio.src = src;
+      audio.load();
       if (isPlaying) {
-        audioRef.current.play().catch((err) => {
+        audio.play().catch((err) => {
           console.error('Playback error:', err);
         });
       }
+    };
+
+    const episodeUrl = currentEpisode.audio;
+    const token =
+      typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+
+    // If the episode URL is served from our API backend, fetch it with auth
+    const isFromBackend =
+      typeof episodeUrl === 'string' && episodeUrl.includes(API_BASE_URL);
+
+    if (isFromBackend && token) {
+      fetch(episodeUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error(`Failed to fetch audio: ${res.status}`);
+          return res.blob();
+        })
+        .then((blob) => {
+          const objectUrl = URL.createObjectURL(blob);
+          // store so we can revoke later
+          audio._objectUrl = objectUrl;
+          setSrcAndPlay(objectUrl);
+        })
+        .catch((err) => {
+          console.error(
+            'Protected audio fetch failed, falling back to direct URL',
+            err
+          );
+          setSrcAndPlay(episodeUrl);
+        });
+    } else {
+      // public URL or no token: set directly
+      setSrcAndPlay(episodeUrl);
     }
   }, [currentEpisode]);
 
