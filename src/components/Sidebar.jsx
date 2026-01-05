@@ -6,6 +6,7 @@ import {
   HeartIcon,
   ClockIcon,
   SparklesIcon,
+  BookmarkIcon,
   MicrophoneIcon,
   ChevronDownIcon
 } from '@heroicons/react/24/outline';
@@ -191,6 +192,19 @@ const Sidebar = ({ selectedCategory, setSelectedCategory }) => {
                   >
                     <ClockIcon className="w-4 h-4 z-10" />
                     <span className="font-medium z-10">Recently Played</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setSelectedCategory('PodcastSaved')}
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 group relative overflow-hidden ${
+                      selectedCategory === 'PodcastSaved'
+                        ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 shadow-lg'
+                        : 'text-gray-400 hover:bg-gradient-to-r hover:from-gray-800/50 hover:to-gray-700/50 hover:text-white'
+                    }`}
+                  >
+                    <BookmarkIcon className="w-4 h-4 z-10" />
+                    <span className="font-medium z-10">Saved Podcasts</span>
                   </button>
                 </li>
               </ul>

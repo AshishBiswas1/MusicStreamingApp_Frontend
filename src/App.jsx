@@ -262,7 +262,8 @@ function App() {
             <Profile onBack={() => setShowProfile(false)} />
           ) : selectedCategory === 'Podcasts' ||
             selectedCategory === 'PodcastHistory' ||
-            selectedCategory === 'PodcastRecently' ? (
+            selectedCategory === 'PodcastRecently' ||
+            selectedCategory === 'PodcastSaved' ? (
             <Podcasts viewMode={selectedCategory} />
           ) : selectedCategory === 'Liked Songs' ? (
             <LikedSongs

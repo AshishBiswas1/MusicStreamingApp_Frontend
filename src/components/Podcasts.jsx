@@ -48,6 +48,13 @@ const Podcasts = ({ viewMode }) => {
         return;
       }
 
+      // If viewMode is saved podcasts
+      if (viewMode === 'PodcastSaved') {
+        const data = await podcastService.getSavedPodcasts();
+        setPodcasts(Array.isArray(data) ? data : []);
+        return;
+      }
+
       // If viewMode is recently played podcasts (recently_played router)
       if (viewMode === 'PodcastRecently') {
         const rows = await recentlyPlayedService.getPlayedPodcast();
