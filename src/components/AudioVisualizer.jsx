@@ -83,27 +83,18 @@ const WaveAnimation = ({
         console.log('Audio graph connected successfully');
       }
 
-      // Resume audio context if suspended
-      if (audioContext.state === 'suspended') {
-        console.log('Audio context is suspended, attempting to resume...');
-        audioContext.resume().then(() => {
-          console.log('Audio context resumed on init');
-        });
-      }
+      // NOTE: Do not call audioContext.resume() here — resume must occur
+      // after a user gesture (click/play). The `resume` logic is handled
+      // in the separate `isPlaying` effect which will attempt to resume
+      // the context after a user interaction.
     } catch (error) {
       console.error('Error initializing audio context:', error);
     }
   };
 
-  // Run setup when audioRef or audioSrc change (covers initial attach)
-  useEffect(() => {
-    setupAnalyser();
-    // keep cleanup minimal to avoid stopping audio when component unmounts
-    return () => {
-      console.log('AudioVisualizer cleanup (keeping audio connected)');
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audioSrc]);
+  // Do not auto-initialize the AudioContext on mount or src-change to avoid
+  // autoplay policy errors. The analyser will be created on user gesture
+  // (handled in the play/loadedmetadata listeners below).
 
   // Attach handlers to the audio element so visualizer re-attaches when playback starts
   useEffect(() => {

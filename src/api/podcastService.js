@@ -148,7 +148,10 @@ export const podcastService = {
       const response = await fetchWithAuth(
         `${API_ENDPOINTS.PODCAST}/getSavedPodcast`
       );
-      return response.data || [];
+      // Backend may return either an array directly or an object with a `data` property.
+      if (Array.isArray(response)) return response;
+      if (response && Array.isArray(response.data)) return response.data;
+      return [];
     } catch (error) {
       console.error('Error fetching saved podcasts:', error);
       throw error;
