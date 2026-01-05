@@ -22,15 +22,16 @@ const WaveAnimation = ({
   const analyserRef = useRef(null);
   const dataArrayRef = useRef(null);
   const sourceRef = useRef(null);
+  const sourceElementRef = useRef(null);
 
-  // Initialize audio analyzer
-  useEffect(() => {
-    if (!audioSrc || !audioRef?.current) return;
+  // Initialize audio analyzer — extracted to re-run when audio element attaches or playback starts
+  const setupAnalyser = () => {
+    const audioEl = audioRef?.current;
+    if (!audioSrc || !audioEl) return;
 
     console.log('Initializing audio visualizer for:', audioSrc);
 
     try {
-      // Reuse existing audio context or create new one
       if (!audioContextRef.current) {
         const AudioContextClass =
           window.AudioContext || window.webkitAudioContext;
@@ -41,7 +42,7 @@ const WaveAnimation = ({
 
       const audioContext = audioContextRef.current;
 
-      // Always create a fresh analyser for each song
+      // Create a fresh analyser for each song
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
       analyser.smoothingTimeConstant = 0.8;
@@ -50,26 +51,39 @@ const WaveAnimation = ({
       const bufferLength = analyser.frequencyBinCount;
       dataArrayRef.current = new Uint8Array(bufferLength);
 
-      // Only create media element source once
-      if (!sourceRef.current) {
-        console.log('Creating media element source...');
-        const source = audioContext.createMediaElementSource(audioRef.current);
-        sourceRef.current = source;
+      // If the media element attached to the source changed, recreate the source
+      if (!sourceRef.current || sourceElementRef.current !== audioEl) {
+        try {
+          if (sourceRef.current) {
+            try {
+              sourceRef.current.disconnect();
+            } catch (e) {}
+            sourceRef.current = null;
+            sourceElementRef.current = null;
+          }
+          console.log('Creating media element source...');
+          const source = audioContext.createMediaElementSource(audioEl);
+          sourceRef.current = source;
+          sourceElementRef.current = audioEl;
+        } catch (err) {
+          console.warn('Failed to create MediaElementSource:', err);
+          // Can't create source (maybe already created on this context). Continue.
+        }
       }
 
-      // Always reconnect to ensure fresh connection
-      console.log('Connecting audio graph: source -> analyser -> destination');
-      try {
-        sourceRef.current.disconnect();
-      } catch (e) {
-        // Ignore disconnect errors
+      if (sourceRef.current) {
+        try {
+          sourceRef.current.disconnect();
+        } catch (e) {
+          // ignore
+        }
+        sourceRef.current.connect(analyser);
+        analyser.connect(audioContext.destination);
+
+        console.log('Audio graph connected successfully');
       }
-      sourceRef.current.connect(analyser);
-      analyser.connect(audioContext.destination);
 
-      console.log('Audio graph connected successfully');
-
-      // Resume audio context if suspended (required for audio to play)
+      // Resume audio context if suspended
       if (audioContext.state === 'suspended') {
         console.log('Audio context is suspended, attempting to resume...');
         audioContext.resume().then(() => {
@@ -78,19 +92,49 @@ const WaveAnimation = ({
       }
     } catch (error) {
       console.error('Error initializing audio context:', error);
-      // If source already exists, just continue without audio analysis
-      if (error.name === 'InvalidStateError') {
-        console.log(
-          'Audio source already connected, visualization will not be available'
-        );
+    }
+  };
+
+  // Run setup when audioRef or audioSrc change (covers initial attach)
+  useEffect(() => {
+    setupAnalyser();
+    // keep cleanup minimal to avoid stopping audio when component unmounts
+    return () => {
+      console.log('AudioVisualizer cleanup (keeping audio connected)');
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioSrc]);
+
+  // Attach handlers to the audio element so visualizer re-attaches when playback starts
+  useEffect(() => {
+    const audioEl = audioRef?.current;
+    if (!audioEl) return;
+
+    const handlePlay = () => {
+      try {
+        setupAnalyser();
+      } catch (e) {
+        console.error('Error in play handler setupAnalyser:', e);
       }
+    };
+
+    // Also trigger when metadata loads (element src changed)
+    const handleLoaded = () => setupAnalyser();
+
+    audioEl.addEventListener('play', handlePlay);
+    audioEl.addEventListener('loadedmetadata', handleLoaded);
+
+    // If audio is already playing, ensure analyser is set up
+    if (!audioEl.paused) {
+      setupAnalyser();
     }
 
     return () => {
-      // Don't disconnect or close on cleanup to keep audio playing
-      console.log('AudioVisualizer cleanup (keeping audio connected)');
+      audioEl.removeEventListener('play', handlePlay);
+      audioEl.removeEventListener('loadedmetadata', handleLoaded);
     };
-  }, [audioRef, audioSrc]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioRef]);
 
   // Resume audio context when playing
   useEffect(() => {
