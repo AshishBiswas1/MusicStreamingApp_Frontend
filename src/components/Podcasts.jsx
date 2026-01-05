@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { podcastService } from '../api/podcastService';
 import { recentlyPlayedService } from '../api/musicService';
 import PodcastPlayer from './PodcastPlayer';
+import Toast from './Toast';
 import {
   PlayIcon,
   PauseIcon,
@@ -27,6 +28,11 @@ const Podcasts = ({ viewMode }) => {
   const [currentEpisode, setCurrentEpisode] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
+  const [toast, setToast] = useState({
+    message: '',
+    type: 'info',
+    visible: false
+  });
 
   // Fetch podcasts on mount and when viewMode changes
   useEffect(() => {
@@ -144,9 +150,27 @@ const Podcasts = ({ viewMode }) => {
         publisher: podcast.publisher,
         image: podcast.image
       });
-      fetchSavedPodcasts();
+      // Refresh saved list
+      await fetchSavedPodcasts();
+
+      // If we're currently viewing saved podcasts, refresh the displayed list too
+      if (viewMode === 'PodcastSaved') {
+        await fetchPodcasts();
+      }
+
+      // show a success toast
+      setToast({
+        message: 'Podcast saved successfully',
+        type: 'success',
+        visible: true
+      });
     } catch (err) {
       console.error('Error saving podcast:', err);
+      setToast({
+        message: 'Failed to save podcast',
+        type: 'error',
+        visible: true
+      });
     }
   };
 
@@ -211,6 +235,14 @@ const Podcasts = ({ viewMode }) => {
 
   return (
     <div className="flex-1 p-8 overflow-y-auto">
+      {toast.visible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={3000}
+          onClose={() => setToast((t) => ({ ...t, visible: false }))}
+        />
+      )}
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-2">
